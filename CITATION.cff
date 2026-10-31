@@ -3,6 +3,8 @@ message: "If you use this software or its data, please cite the paper below."
 title: "stratfs: annual solar fraction of solar process-water heating with stratified storage"
 version: 1.0.0
 license: MIT
+repository-code: "https://github.com/musiddiqui85/stratfs"
+url: "https://github.com/musiddiqui85/stratfs"
 authors:
   - family-names: Siddiqui
     given-names: M. Usama

@@ -139,6 +139,23 @@ and an isotropic sky. Hourly typical meteorological years are from PVGIS (Europe
 Centre); mains temperatures follow the NREL relation of Burch and Christensen (2007) with the phase anchored to the
 coldest month. Monthly utilizability follows Klein (1978).
 
+### Simulation database
+
+`data/simulation_database.csv.gz` holds all 55,296 simulated designs of the fit, 49,152 at the 239 training sites
+and 6,144 at the 28 test sites, one row per design:
+
+| Column | Meaning |
+|---|---|
+| `set`, `site`, `climate_group`, `schedule` | training or test design, its site, climate group and load schedule |
+| `Phi_sys`, `Psi_sys`, `B_L`, `R_ch`, `HT`, `kappa_s`, `kappa_z_10` | similarity groups (`kappa_z_10`: interlayer conduction at ten layers) |
+| `f_L` | active load fraction |
+| `f_s_N100`, `f_s_N200` | annual solar fraction simulated with 100 and 200 storage layers |
+| `f_s_reference` | grid-extrapolated reference, f_200 + (f_200 - f_100) / (2^0.8 - 1), the target of the fit |
+| `f_s_mixed` | annual solar fraction of the same plant with a fully mixed storage |
+| `collected_D`, `admitted_D`, `storage_loss_D`, `curtailed_D`, `storage_change_D` | annual heat collected by the source, admitted to the storage, lost from it and curtailed at its limit, and the change of stored heat over the year, each in units of the annual demand (reference solution) |
+
+The test RMSE of the paper can be recomputed from it with the package (`tests/test_stratfs.py`).
+
 `tests/data/reference_predictions.csv` holds the 6,144 held-out test designs with the predictions of the three
 forms from the code used in the paper and the simulated (grid-extrapolated) solar fraction; the tests check that
 this package reproduces them.

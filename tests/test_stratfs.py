@@ -58,3 +58,16 @@ def test_world_maps():
     assert len(w) == 267 and w.f_s.between(0, 1).all()
     s = stratfs.world_groups(dict(Phi_sys=0.88, Psi_sys=0.40, B_L=0.2, R_ch=2.0, HT=0.35, kappa_s=0.022))
     assert len(s) == 267 and s.f_s.between(0, 1).all()
+
+
+def test_headline_errors_from_simulation_database():
+    """The test RMSE of the paper, recomputed from the released simulation database with the package."""
+    db = pd.read_csv(Path(__file__).parents[1] / "data" / "simulation_database.csv.gz")
+    assert len(db) == 55296 and db.set.value_counts().to_dict() == {"training": 49152, "test": 6144}
+    test = db[db.set.eq("test")]
+    rmse = {}
+    for s, g in test.groupby("schedule"):
+        f = stratfs.solar_fraction(g.Phi_sys, g.Psi_sys, g.B_L, g.R_ch, g.HT, g.kappa_s, site=g.site.to_numpy(),
+                                   schedule=s, f_L=g.f_L)
+        rmse[s] = float(np.sqrt(np.mean((100 * (f - g.f_s_reference)) ** 2)))
+    assert rmse == pytest.approx({"day_08_18": 2.20, "night_20_06": 2.21, "continuous_24h": 2.72}, abs=0.01)
