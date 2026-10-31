@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stratfs"
+version = "1.0.0"
+description = "Annual solar fraction of solar process-water heating with stratified storage: a physics-informed dimensionless correlation with site data for 267 sites"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "M. Usama Siddiqui"}, {name = "Syed M. Zubair"}]
+dependencies = ["numpy>=1.24", "scipy>=1.10", "pandas>=2.0"]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.40", "plotly>=5.20"]
+test = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["stratfs"]
+
+[tool.setuptools.package-data]
+stratfs = ["data/*.csv", "data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
