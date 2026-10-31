@@ -24,7 +24,7 @@ tested on 28 held-out sites in seven climate groups.
 ## Install
 
 ```bash
-git clone https://github.com/<account>/stratfs.git
+git clone https://github.com/musiddiqui85/stratfs.git
 cd stratfs
 pip install -e .            # the library: numpy, scipy, pandas
 pip install -e ".[app]"     # plus the app: streamlit, plotly
