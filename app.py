@@ -107,7 +107,7 @@ if mode == "Dimensional plant":
     res = stratfs.predict_plant(plant, site, forms=forms).iloc[0]
     g = {k: float(res[k]) for k in GROUPS}
 else:
-    defaults = dict(Phi_sys=0.883, Psi_sys=0.401, B_L=0.20, R_ch=2.0, HT=0.352, kappa_s=0.0223)
+    defaults = dict(Phi_sys=0.908, Psi_sys=0.390, B_L=0.20, R_ch=2.0, HT=0.352, kappa_s=0.0223)
     g = {}
     with st.sidebar.expander("Similarity groups", expanded=True):
         for k in GROUPS:
@@ -123,9 +123,9 @@ monthly = stratfs.solar_fraction(*(g[k] for k in GROUPS), site=site, schedule=sc
 dT = float(stratfs.temperature_scale([site], T_p)[0])
 
 st.title("Annual solar fraction with stratified storage")
-st.markdown("Companion app to the manuscript *A physics-informed dimensionless correlation for the annual solar "
-            "fraction of solar process-water heating with stratified storage*, M. Usama Siddiqui and Syed M. Zubair, "
-            "submitted to **Energy Conversion and Management**.")
+st.markdown("Companion app to the manuscript *A physics-informed dimensionless correlation for the design of solar "
+            "process-water heating plants with stratified storage*, M. Usama Siddiqui and Syed M. Zubair, "
+            "submitted to **Applied Energy**.")
 st.caption("Solar process-water heating: collector field, closed oil loop, external heat exchanger, stratified "
            "storage and auxiliary heater. A physics-informed dimensionless correlation, fitted on 49,152 converged "
            "simulations at 239 sites and tested on 28 held-out sites.")
@@ -326,17 +326,16 @@ monthly climate of the site. Plants of any size with the same groups and climate
 $\kappa_s$ 0.01-0.2, and a temperature lift $T_p - T_{m,\mathrm{ref}}$ of 45-80 K. Outside it the correlation
 extrapolates and its accuracy is not established.
 
-**Accuracy.** Test RMSE 2.20, 2.21 and 2.72 percentage points for the daytime, night-time and continuous loads on
+**Accuracy.** Test RMSE 2.30, 2.25 and 2.81 percentage points for the daytime, night-time and continuous loads on
 28 held-out sites. The accuracy ranges A-E (set by $\Phi_\mathrm{sys}$ and $\Psi_\mathrm{sys}$) give the typical error
 for designs in each range, not a prediction interval for an individual design.
 
 **Forms.** The stratified-storage correlation is the recommended form. The explicit and implicit forms are the
 simpler forms of the paper, kept for comparison.
 
-**Manuscript.** M. Usama Siddiqui, Syed M. Zubair. *A physics-informed dimensionless correlation for the annual
-solar fraction of solar process-water heating with stratified storage.* Submitted to *Energy Conversion and
-Management*. Please cite it if you use this app, the package or its data.
+**Manuscript.** M. Usama Siddiqui, Syed M. Zubair. *A physics-informed dimensionless correlation for the design of
+solar process-water heating plants with stratified storage.* Submitted to *Applied Energy*. Please cite it if you use this app, the package or its data.
 
 **Assumptions.** Fixed top-inlet and bottom-outlet storage ports, ideal mixing of unstable layers, no charging or
-process water pipes, constant-flow loads, climate from typical meteorological years (PVGIS).
+process water pipes, constant-flow loads, climate from typical meteorological years (PVGIS), absorbed irradiance with the Perez sky model.
 """)

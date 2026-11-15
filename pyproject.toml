@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stratfs"
-version = "1.0.0"
+version = "1.1.0"
 description = "Annual solar fraction of solar process-water heating with stratified storage: a physics-informed dimensionless correlation with site data for 267 sites"
 readme = "README.md"
 requires-python = ">=3.10"

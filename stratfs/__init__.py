@@ -4,7 +4,7 @@ A physics-informed dimensionless correlation, fitted on 49,152 converged simulat
 28 held-out sites, with the site data of all 267 sites. Quick use:
 
     import stratfs
-    stratfs.solar_fraction(0.88, 0.40, 0.20, 2.0, 0.35, 0.022, site="Karachi", schedule="day_08_18")
+    stratfs.solar_fraction(0.91, 0.39, 0.20, 2.0, 0.35, 0.022, site="Karachi", schedule="day_08_18")
 
     plant = stratfs.Plant(collector_area_m2=650, storage_volume_m3=10, daily_load_m3=50, schedule="day_08_18")
     stratfs.predict_plant(plant, "Karachi")
@@ -19,7 +19,7 @@ from stratfs.data import SCHEDULE_NAMES, SCHEDULES, constants, monthly_inputs, s
 from stratfs.plant import Plant, groups
 from stratfs.validity import accuracy_range, accuracy_table, check
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __all__ = ["FORMS", "SCHEDULES", "SCHEDULE_NAMES", "Plant", "world_groups", "world_plant", "accuracy_range", "accuracy_table", "check", "constants",
            "groups", "monthly_inputs", "predict_groups", "predict_plant", "site_names", "sites", "solar_fraction",
            "temperature_scale"]

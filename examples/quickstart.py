@@ -5,7 +5,7 @@
 import stratfs
 
 # Dimensionless: the six similarity groups at a site
-f = stratfs.solar_fraction(0.883, 0.401, 0.20, 2.0, 0.352, 0.0223, site="Karachi", schedule="day_08_18")
+f = stratfs.solar_fraction(0.908, 0.390, 0.20, 2.0, 0.352, 0.0223, site="Karachi", schedule="day_08_18")
 print(f"Annual solar fraction from the groups: {f[0]:.4f}")
 
 # Dimensional: 650 m2 of evacuated tubes, a 10 m3 storage and 50 m3/day of process water at 80 C

@@ -20,28 +20,28 @@ def test_reproduces_reference_predictions(form):
 
 def test_test_error_of_final_form():
     rmse = {s: float(np.sqrt(np.mean((100 * (g.f_s_final - g.f_s_simulated)) ** 2))) for s, g in REF.groupby("schedule")}
-    assert rmse == pytest.approx({"day_08_18": 2.20, "night_20_06": 2.21, "continuous_24h": 2.72}, abs=0.01)
+    assert rmse == pytest.approx({"day_08_18": 2.30, "night_20_06": 2.25, "continuous_24h": 2.81}, abs=0.01)
 
 
 def test_reference_plant_karachi():
     r = stratfs.predict_plant(stratfs.Plant(), "Karachi").iloc[0]
-    assert r.Phi_sys == pytest.approx(0.8829, abs=1e-4)
-    assert r.Psi_sys == pytest.approx(0.4012, abs=1e-4)
+    assert r.Phi_sys == pytest.approx(0.9078, abs=1e-4)
+    assert r.Psi_sys == pytest.approx(0.3902, abs=1e-4)
     assert r.B_L == pytest.approx(0.2, abs=1e-9)
     assert r.R_ch == pytest.approx(2.0, abs=1e-9)
-    assert r.f_s == pytest.approx(0.7887, abs=1e-4)
+    assert r.f_s == pytest.approx(0.8083, abs=1e-4)
     assert r.accuracy_range == "D" and bool(r.valid)
 
 
 def test_monthly_consistent_with_annual():
-    f, f_m, d_L = stratfs.solar_fraction(0.883, 0.401, 0.2, 2.0, 0.352, 0.0223, site="Karachi", monthly=True)
+    f, f_m, d_L = stratfs.solar_fraction(0.908, 0.390, 0.2, 2.0, 0.352, 0.0223, site="Karachi", monthly=True)
     assert f_m.shape == (1, 12) and d_L.sum() == pytest.approx(1.0)
     assert f[0] == pytest.approx(float((f_m * d_L).sum()))
 
 
 def test_process_temperature_rescaling():
-    base = stratfs.solar_fraction(0.883, 0.401, 0.2, 2.0, 0.352, 0.0223, site="Karachi", T_process=80.0)
-    other = stratfs.solar_fraction(0.883, 0.401, 0.2, 2.0, 0.352, 0.0223, site="Karachi", T_process=70.0)
+    base = stratfs.solar_fraction(0.908, 0.390, 0.2, 2.0, 0.352, 0.0223, site="Karachi", T_process=80.0)
+    other = stratfs.solar_fraction(0.908, 0.390, 0.2, 2.0, 0.352, 0.0223, site="Karachi", T_process=70.0)
     assert np.isfinite(other).all() and abs(other[0] - base[0]) > 1e-6
 
 
@@ -70,4 +70,4 @@ def test_headline_errors_from_simulation_database():
         f = stratfs.solar_fraction(g.Phi_sys, g.Psi_sys, g.B_L, g.R_ch, g.HT, g.kappa_s, site=g.site.to_numpy(),
                                    schedule=s, f_L=g.f_L)
         rmse[s] = float(np.sqrt(np.mean((100 * (f - g.f_s_reference)) ** 2)))
-    assert rmse == pytest.approx({"day_08_18": 2.20, "night_20_06": 2.21, "continuous_24h": 2.72}, abs=0.01)
+    assert rmse == pytest.approx({"day_08_18": 2.30, "night_20_06": 2.25, "continuous_24h": 2.81}, abs=0.01)

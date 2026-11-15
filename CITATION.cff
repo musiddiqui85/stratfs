@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software or its data, please cite the paper below."
 title: "stratfs: annual solar fraction of solar process-water heating with stratified storage"
-version: 1.0.0
+version: 1.1.0
 license: MIT
 repository-code: "https://github.com/musiddiqui85/stratfs"
 url: "https://github.com/musiddiqui85/stratfs"
@@ -12,12 +12,12 @@ authors:
     given-names: Syed M.
 preferred-citation:
   type: article
-  title: "A physics-informed dimensionless correlation for the annual solar fraction of solar process-water heating with stratified storage"
+  title: "A physics-informed dimensionless correlation for the design of solar process-water heating plants with stratified storage"
   authors:
     - family-names: Siddiqui
       given-names: M. Usama
     - family-names: Zubair
       given-names: Syed M.
-  journal: "Energy Conversion and Management"
+  journal: "Applied Energy"
   status: submitted
-  notes: "Submitted to Energy Conversion and Management"
+  notes: "Submitted to Applied Energy"

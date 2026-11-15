@@ -6,8 +6,8 @@ dimensional and dimensionless design.
 
 This repository accompanies the manuscript:
 
-> M. Usama Siddiqui, Syed M. Zubair. **A physics-informed dimensionless correlation for the annual solar fraction
-> of solar process-water heating with stratified storage.** Submitted to *Energy Conversion and Management*.
+> M. Usama Siddiqui, Syed M. Zubair. **A physics-informed dimensionless correlation for the design of solar
+> process-water heating plants with stratified storage.** Submitted to *Applied Energy*.
 
 The plant is a collector field with a closed oil loop and an external heat exchanger charging a stratified
 water storage, from which a process load draws hot water tempered to the process temperature, with an auxiliary
@@ -17,9 +17,9 @@ tested on 28 held-out sites in seven climate groups.
 
 | Load schedule | Test RMSE (percentage points) |
 |---|---:|
-| Daytime, 08:00-18:00 | 2.20 |
-| Night-time, 20:00-06:00 | 2.21 |
-| Continuous, 24 h | 2.72 |
+| Daytime, 08:00-18:00 | 2.30 |
+| Night-time, 20:00-06:00 | 2.25 |
+| Continuous, 24 h | 2.81 |
 
 ## Install
 
@@ -59,8 +59,8 @@ repository: point it at `app.py`. It installs `requirements.txt`.
 import stratfs
 
 # Dimensionless: the six groups at a site (Karachi reference plant, daytime load)
-stratfs.solar_fraction(0.883, 0.401, 0.20, 2.0, 0.352, 0.0223, site="Karachi", schedule="day_08_18")
-# -> array([0.7888])
+stratfs.solar_fraction(0.908, 0.390, 0.20, 2.0, 0.352, 0.0223, site="Karachi", schedule="day_08_18")
+# -> array([0.8084])
 
 # Dimensional: a plant at a site, with its groups, accuracy range and validity flags
 plant = stratfs.Plant(collector_area_m2=650, storage_volume_m3=10, daily_load_m3=50, schedule="day_08_18")
@@ -73,9 +73,9 @@ stratfs.predict_plant(plant, "Karachi", collector_area_m2=[300, 650, 1300]).f_s
 stratfs.world_plant(plant)
 
 # Monthly values, and the explicit and implicit forms
-f_s, f_monthly, demand_share = stratfs.solar_fraction(0.883, 0.401, 0.20, 2.0, 0.352, 0.0223, site="Karachi",
+f_s, f_monthly, demand_share = stratfs.solar_fraction(0.908, 0.390, 0.20, 2.0, 0.352, 0.0223, site="Karachi",
                                                       schedule="day_08_18", monthly=True)
-stratfs.solar_fraction(0.883, 0.401, 0.20, 2.0, 0.352, 0.0223, site="Karachi", form="implicit")
+stratfs.solar_fraction(0.908, 0.390, 0.20, 2.0, 0.352, 0.0223, site="Karachi", form="implicit")
 ```
 
 `examples/quickstart.py` runs these.
@@ -104,11 +104,11 @@ sites; they indicate the typical error for designs in each range, not a predicti
 
 | Range | Φ_sys | Ψ_sys | RMSE daytime / night / continuous (pp) |
 |---|---|---|---|
-| A | ≤ 0.3 | any | 0.74 / 0.82 / 0.66 |
-| B | 0.3-0.6 | ≤ 1 | 1.10 / 1.18 / 1.42 |
-| C | 0.3-0.6 | > 1 | 2.02 / 2.21 / 2.05 |
-| D | > 0.6 | ≤ 1 | 2.39 / 2.20 / 3.30 |
-| E | > 0.6 | > 1 | 3.96 / 4.12 / 4.58 |
+| A | ≤ 0.3 | any | 0.77 / 0.83 / 0.67 |
+| B | 0.3-0.6 | ≤ 1 | 1.16 / 1.21 / 1.46 |
+| C | 0.3-0.6 | > 1 | 2.08 / 2.23 / 2.10 |
+| D | > 0.6 | ≤ 1 | 2.53 / 2.28 / 3.45 |
+| E | > 0.6 | > 1 | 4.09 / 4.17 / 4.69 |
 
 Outside the fitted domain the correlation extrapolates and its accuracy is not established; the library flags
 every group and the temperature lift (`valid`).
@@ -135,7 +135,8 @@ All in `stratfs/data`:
 | `constants.json` | constants of the three forms, the variability closure, the validity domain and the accuracy ranges |
 
 The absorbed irradiation is that on a collector tilted at the latitude and facing the equator, with (τα)_n 0.75
-and an isotropic sky. Hourly typical meteorological years are from PVGIS (European Commission Joint Research
+and the anisotropic sky model of Perez et al. (1990) with its all-sites coefficients, the circumsolar part
+treated as diffuse. Hourly typical meteorological years are from PVGIS (European Commission Joint Research
 Centre); mains temperatures follow the NREL relation of Burch and Christensen (2007) with the phase anchored to the
 coldest month. Monthly utilizability follows Klein (1978).
 
@@ -171,8 +172,8 @@ pytest
 
 If you use this package or its data, please cite the manuscript (details in `CITATION.cff`):
 
-> M. Usama Siddiqui, Syed M. Zubair, A physics-informed dimensionless correlation for the annual solar fraction of
-> solar process-water heating with stratified storage, submitted to *Energy Conversion and Management*.
+> M. Usama Siddiqui, Syed M. Zubair, A physics-informed dimensionless correlation for the design of solar
+> process-water heating plants with stratified storage, submitted to *Applied Energy*.
 
 The citation will be updated with the volume, pages and DOI once the article is published.
 
