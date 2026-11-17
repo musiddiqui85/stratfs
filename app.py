@@ -52,8 +52,19 @@ def world_for_plant(plant: stratfs.Plant) -> pd.DataFrame:
 
 
 @st.cache_data
-def world_for_groups(g: tuple, schedule: str, T_p: float) -> pd.DataFrame:
-    return stratfs.world_groups(dict(zip(GROUPS, g)), schedule, T_p)
+def world_for_groups(g: tuple, schedule: str, T_p: float, load: float) -> pd.DataFrame:
+    return stratfs.world_specification(dict(zip(GROUPS, g)),
+                                       stratfs.Plant(schedule=schedule, T_process_C=T_p, daily_load_m3=load))
+
+
+@st.cache_data
+def sizing_table(plant: stratfs.Plant, site: str, targets: tuple, specific: tuple) -> pd.DataFrame:
+    return stratfs.size_for_target(plant, site, targets, specific)
+
+
+@st.cache_data
+def sizing_curve_cached(plant: stratfs.Plant, site: str, specific: float) -> pd.DataFrame:
+    return stratfs.sizing_curve(plant, site, specific, n=240)
 
 
 def label_site(name: str) -> str:
@@ -130,7 +141,7 @@ st.caption("Solar process-water heating: collector field, closed oil loop, exter
            "storage and auxiliary heater. A physics-informed dimensionless correlation, fitted on 49,152 converged "
            "simulations at 239 sites and tested on 28 held-out sites.")
 
-tabs = st.tabs(["Result", "Parametric sweep", "Design map", "World map", "Sites", "About"])
+tabs = st.tabs(["Result", "Parametric sweep", "Design map", "Sizing", "World map", "Sites", "About"])
 
 # ----------------------------------------------------------------------------------------------- result
 with tabs[0]:
@@ -252,13 +263,71 @@ with tabs[2]:
     st.caption(f"{100 * inside.mean():.0f} % of this map lies inside the fitted domain. Other inputs are held at "
                "their current values.")
 
-# ----------------------------------------------------------------------------------------------- world map
+# ----------------------------------------------------------------------------------------------- sizing
 with tabs[3]:
+    if plant is not None:
+        st.markdown("**Dimensional sizing.** The smallest collector area that reaches each target annual solar "
+                    "fraction at a fixed specific storage volume (litres per m² of collector), each design at the "
+                    "charging flow of highest solar fraction, with this plant's load, collector loop and storage "
+                    "(Section 6.1 of the paper). Only designs inside the fitted domain are considered.")
+        a, b = st.columns(2)
+        targets = a.multiselect("Target annual solar fractions", [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+                                default=[0.4, 0.6, 0.8])
+        specific = b.multiselect("Specific storage volumes (L/m²)", [25.0, 50.0, 75.0, 100.0, 150.0, 200.0],
+                                 default=[25.0, 50.0, 100.0])
+        if targets and specific:
+            sized = sizing_table(plant, site, tuple(sorted(targets)), tuple(sorted(specific)))
+            show = sized.rename(columns={"specific_l_m2": "L/m²", "collector_area_m2": "Collector area (m²)",
+                                         "storage_volume_m3": "Storage volume (m³)",
+                                         "charging_rate_w_k": "Charging rate (W/K)", "accuracy_range": "Range",
+                                         "rmse_pp": "RMSE (pp)"})
+            cols = ["target", "L/m²", "reached", "Collector area (m²)", "Storage volume (m³)", "Charging rate (W/K)",
+                    "R_ch", "Phi_sys", "B_L", "f_s", "Range", "RMSE (pp)", "f_s_max"]
+            st.dataframe(show[[c for c in cols if c in show]].round(3), hide_index=True, width="stretch")
+            if not sized.reached.all():
+                st.caption("Not reached: no valid design on the sizing curve reaches the target; f_s_max is the "
+                           "highest solar fraction found.")
+            fig = go.Figure()
+            for v in sorted(specific):
+                c = sizing_curve_cached(plant, site, v)
+                fig.add_scatter(x=c.f_s, y=c.collector_area_m2, mode="lines", name=f"{v:g} L/m²",
+                                hovertemplate="f<sub>s</sub> %{x:.3f}<br>%{y:,.0f} m²<extra></extra>")
+            ok = sized[sized.reached]
+            fig.add_scatter(x=ok.f_s, y=ok.collector_area_m2, mode="markers", name="sized designs",
+                            marker=dict(size=10, color=NEUTRAL, line=MARKER_EDGE))
+            fig.update_layout(title=f"Collector area for a solar fraction, {SCHEDULE_NAMES[schedule].lower()}, "
+                                    f"{site.replace('_', ' ')}", xaxis=dict(title="Annual solar fraction", range=[0, 1]),
+                              yaxis=dict(title="Collector area (m²)", type="log"), height=480, **LAYOUT)
+            st.plotly_chart(fig, width="stretch")
+            st.download_button("Download the sized designs as CSV", sized.to_csv(index=False), "sized_designs.csv",
+                               "text/csv")
+    else:
+        st.markdown("**Dimensionless specification.** The correlation carries no scale, so the groups specify a "
+                    "plant at any site. For a load at the selected site this is the plant that realizes them "
+                    "(Section 6.3 of the paper): storage volume from $B_L$, collector area from "
+                    r"$\Phi_\mathrm{sys}$ with the reference collector loop, the collector loss coefficient that "
+                    r"$\Psi_\mathrm{sys}$ implies, and the storage limit $T_p + H_T\,\Delta T_L$.")
+        load = st.number_input("Process water per day (m³/day)", 0.1, 1e5, 50.0, 1.0, key="realize_load")
+        r = stratfs.realize(g, site, stratfs.Plant(schedule=schedule, T_process_C=T_p, daily_load_m3=load))
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Collector area", f"{r['collector_area_m2']:,.0f} m²")
+        c2.metric("Storage volume", f"{r['storage_volume_m3']:,.1f} m³")
+        c3.metric("Charging-loop rate", f"{r['charging_rate_w_k']:,.0f} W/K")
+        c1, c2, c3 = st.columns(3)
+        c1.metric(r"Implied collector $U_L$", f"{r['U_L_implied_w_m2k']:.2f} W/m²K")
+        c2.metric(r"Storage limit $T_\mathrm{lim}$", f"{r['T_limit_C']:.1f} °C")
+        c3.metric("Annual demand", f"{r['E_D_GJ']:,.0f} GJ")
+        st.caption("The World map tab carries the same specification to every site; its CSV lists the plant that "
+                   "realizes it at each site for this load.")
+
+# ----------------------------------------------------------------------------------------------- world map
+with tabs[4]:
     if plant is not None:
         w = world_for_plant(plant)
         what = "the same plant"
     else:
-        w = world_for_groups(tuple(g[k] for k in GROUPS), schedule, T_p)
+        w = world_for_groups(tuple(g[k] for k in GROUPS), schedule, T_p,
+                             float(st.session_state.get("realize_load", 50.0)))
         what = "the same dimensionless specification"
     colour = st.radio("Colour by", ["Annual solar fraction", "Accuracy range"], horizontal=True)
     w = w.assign(name=w.site.str.replace("_", " "), fit=np.where(w.valid, "inside fitted domain", "extrapolated"))
@@ -281,11 +350,12 @@ with tabs[3]:
     st.caption(f"Annual solar fraction from {w.f_s.min():.2f} to {w.f_s.max():.2f}; "
                f"{int(w.valid.sum())} of {len(w)} sites inside the fitted domain.")
     cols = ["site", "group", "split", "latitude", "longitude", "f_s", "accuracy_range", "rmse_pp", "valid"]
-    cols += [c for c in ("Phi_sys", "Psi_sys", "B_L", "R_ch", "HT", "kappa_s", "E_D_GJ", "Q_solar_GJ") if c in w]
+    cols += [c for c in ("Phi_sys", "Psi_sys", "B_L", "R_ch", "HT", "kappa_s", "E_D_GJ", "Q_solar_GJ",
+                         "collector_area_m2", "storage_volume_m3", "U_L_implied_w_m2k", "T_limit_C") if c in w]
     st.download_button("Download the map as CSV", w[cols].to_csv(index=False), "solar_fraction_world.csv", "text/csv")
 
 # ----------------------------------------------------------------------------------------------- sites
-with tabs[4]:
+with tabs[5]:
     sel = sites.assign(name=sites.site.str.replace("_", " "),
                        role=np.where(sites.split.eq("test"), "test (held out)", "training"))
     fig = px.scatter_geo(sel, lat="latitude", lon="longitude", color="role",
@@ -316,7 +386,7 @@ with tabs[4]:
                        "monthly_inputs.csv", "text/csv")
 
 # ----------------------------------------------------------------------------------------------- about
-with tabs[5]:
+with tabs[6]:
     st.markdown(r"""
 **What it predicts.** The annual solar fraction of a solar process-water heating plant with a stratified storage,
 for a daytime (08:00-18:00), night-time (20:00-06:00) or continuous load, from six similarity groups and the

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stratfs"
-version = "1.1.0"
+version = "1.2.0"
 description = "Annual solar fraction of solar process-water heating with stratified storage: a physics-informed dimensionless correlation with site data for 267 sites"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,6 +15,7 @@ dependencies = ["numpy>=1.24", "scipy>=1.10", "pandas>=2.0"]
 [project.optional-dependencies]
 app = ["streamlit>=1.40", "plotly>=5.20"]
 test = ["pytest>=7"]
+paper = ["matplotlib>=3.7"]
 
 [tool.setuptools]
 packages = ["stratfs"]

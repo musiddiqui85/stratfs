@@ -8,6 +8,13 @@ A physics-informed dimensionless correlation, fitted on 49,152 converged simulat
 
     plant = stratfs.Plant(collector_area_m2=650, storage_volume_m3=10, daily_load_m3=50, schedule="day_08_18")
     stratfs.predict_plant(plant, "Karachi")
+
+Design (Section 6 of the paper):
+
+    stratfs.size_for_target(plant, "Karachi", targets=(0.4, 0.6, 0.8), specific_storage_l_m2=(25, 50, 100))
+    spec = stratfs.plant_specification(plant, "Karachi")      # the plant as a dimensionless specification
+    stratfs.realize(spec, "Seville", plant)                     # the plant that realizes it in Seville
+    stratfs.world_specification(spec, plant)                    # ... and at every site
 """
 from __future__ import annotations
 
@@ -15,14 +22,19 @@ import numpy as np
 import pandas as pd
 
 from stratfs.correlation import FORMS, solar_fraction
+from stratfs.design import (R_CH_GRID, design_map, plant_specification, realize, size_for_target, sizing_curve,
+                            world_designs, world_specification)
+from stratfs.fchart import fchart_solar_fraction
 from stratfs.data import SCHEDULE_NAMES, SCHEDULES, constants, monthly_inputs, site_names, sites, temperature_scale
 from stratfs.plant import Plant, groups
 from stratfs.validity import accuracy_range, accuracy_table, check
 
-__version__ = "1.1.0"
-__all__ = ["FORMS", "SCHEDULES", "SCHEDULE_NAMES", "Plant", "world_groups", "world_plant", "accuracy_range", "accuracy_table", "check", "constants",
-           "groups", "monthly_inputs", "predict_groups", "predict_plant", "site_names", "sites", "solar_fraction",
-           "temperature_scale"]
+__version__ = "1.2.0"
+__all__ = ["FORMS", "R_CH_GRID", "SCHEDULES", "SCHEDULE_NAMES", "Plant", "accuracy_range", "accuracy_table", "check",
+           "constants", "design_map", "fchart_solar_fraction", "groups", "monthly_inputs", "plant_specification",
+           "predict_groups", "predict_plant", "realize", "site_names", "sites", "size_for_target", "sizing_curve",
+           "solar_fraction", "temperature_scale", "world_designs", "world_groups", "world_plant",
+           "world_specification"]
 
 
 def predict_groups(g: dict | pd.DataFrame, site, schedule: str = "day_08_18", T_process: float = 80.0,

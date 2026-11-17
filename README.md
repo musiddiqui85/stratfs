@@ -28,6 +28,7 @@ git clone https://github.com/musiddiqui85/stratfs.git
 cd stratfs
 pip install -e .            # the library: numpy, scipy, pandas
 pip install -e ".[app]"     # plus the app: streamlit, plotly
+pip install -e ".[paper]"   # plus matplotlib, for the figures of paper/reproduce.py
 ```
 
 Python 3.10 or later.
@@ -47,7 +48,11 @@ properties) or the **dimensionless groups** directly. It shows:
 - **Parametric sweep:** the solar fraction against one input for the three load schedules, with the part outside
   the fitted domain marked.
 - **Design map:** contours of the solar fraction over collector area and storage volume (or Φ_sys and B_L).
-- **World map:** the same plant, or the same dimensionless specification, at all 267 sites, downloadable as CSV.
+- **Sizing:** for a dimensional plant, the smallest collector area for target solar fractions at chosen specific
+  storage volumes, each at its best charging flow; for dimensionless groups, the plant that realizes them at the
+  site for a given daily load (collector area, storage volume, charging rate, implied U_L and storage limit).
+- **World map:** the same plant, or the same dimensionless specification, at all 267 sites, downloadable as CSV
+  (for a specification, with the plant that realizes it at each site).
 - **Sites:** the site map and the monthly climate of the selected site, with all site data downloadable.
 
 The app can also be hosted free on [Streamlit Community Cloud](https://streamlit.io/cloud) from a public GitHub
@@ -78,6 +83,37 @@ f_s, f_monthly, demand_share = stratfs.solar_fraction(0.908, 0.390, 0.20, 2.0, 0
 stratfs.solar_fraction(0.908, 0.390, 0.20, 2.0, 0.352, 0.0223, site="Karachi", form="implicit")
 ```
 
+### Design: dimensional and dimensionless
+
+Section 6 of the paper uses the correlation for preliminary design in two ways.
+
+**Dimensional.** Fix the site, the load and the hardware, and search the plant size. `size_for_target` returns the
+smallest collector area that reaches each target annual solar fraction at a fixed specific storage volume (litres
+per m² of collector), each design at the charging flow (`R_ch` on `stratfs.R_CH_GRID`) of highest solar fraction;
+`design_map` gives f_s over collector area × storage volume and `sizing_curve` f_s against collector area. Only
+designs inside the fitted domain are considered.
+
+```python
+plant = stratfs.Plant(schedule="day_08_18")            # the reference loop and storage, 50 m3/day at 80 C
+stratfs.size_for_target(plant, "Karachi", targets=(0.4, 0.6, 0.8), specific_storage_l_m2=(25, 50, 100))
+stratfs.design_map(plant, "Karachi", n=60)              # f_s(A, V) at the best charging flow
+```
+
+**Dimensionless.** The correlation carries no scale, so a plant can be specified by its groups and carried to any
+site. `plant_specification` gives the groups of a plant at a site, `realize` the plant that realizes a specification
+at a site for a given load (storage volume from B_L, collector area from Φ_sys by fixed point on F_sys, the collector
+loss coefficient that Ψ_sys implies and the storage limit T_p + H_T ΔT_L), and `world_specification` both at every
+site.
+
+```python
+spec = stratfs.plant_specification(stratfs.Plant(), "Karachi")
+stratfs.realize(spec, "Seville", stratfs.Plant())       # collector area, volume, charging rate, U_L, T_lim
+stratfs.world_specification(spec, stratfs.Plant())      # f_s and the realizing plant at all 267 sites
+```
+
+`fchart_solar_fraction` evaluates the modified φ̄,f-chart of Braun, Klein and Pearson (1983), the fully mixed
+storage method the paper compares with, at the same groups (T_p = 80 °C).
+
 `examples/quickstart.py` runs these.
 
 ### Inputs
@@ -95,7 +131,7 @@ The temperature scale is ΔT_L = T_p - T_m,ref, the process temperature less the
 temperature; the correlation was fitted for ΔT_L of 45-80 K. The load schedules are a daytime (08:00-18:00), a
 night-time (20:00-06:00) and a continuous constant-flow load. `stratfs.Plant` converts a dimensional plant to the
 groups, with the reference plant of the paper as its defaults (650 m² of evacuated tubes, (τα)_n 0.75, U_L
-1.5 W/m²K; a 10 m³ atmospheric storage limited to 99 °C with 0.4 W/m²K insulation; 50 m³/day at 80 °C).
+1.5 W/m²K; a 10 m³ pressurized storage limited to 99 °C with 0.4 W/m²K insulation; 50 m³/day at 80 °C).
 
 ### Accuracy ranges
 
@@ -133,6 +169,7 @@ All in `stratfs/data`:
 | `monthly_inputs.csv` | 12 months per site: days, daily global and diffuse irradiation (MJ/m² per day), clearness index, (τα), ambient and mains temperatures, sunset hour angle, noon-hour share and tilt factors, monthly share of the absorbed resource, and the normalized ambient and mains temperatures at T_p = 80 °C |
 | `utilizability.csv` | the site utilizability φ_site(x) on a 101-point grid (explicit form) |
 | `constants.json` | constants of the three forms, the variability closure, the validity domain and the accuracy ranges |
+| `fchart_inputs.csv` | 12 months per site and load schedule: monthly aggregates of the normalized hourly forcing for the modified φ̄,f-chart (load share, load capacitance, mean mains and store-ambient temperatures), at 80 °C |
 
 The absorbed irradiation is that on a collector tilted at the latitude and facing the equator, with (τα)_n 0.75
 and the anisotropic sky model of Perez et al. (1990) with its all-sites coefficients, the circumsolar part
@@ -155,11 +192,35 @@ and 6,144 at the 28 test sites, one row per design:
 | `f_s_mixed` | annual solar fraction of the same plant with a fully mixed storage |
 | `collected_D`, `admitted_D`, `storage_loss_D`, `curtailed_D`, `storage_change_D` | annual heat collected by the source, admitted to the storage, lost from it and curtailed at its limit, and the change of stored heat over the year, each in units of the annual demand (reference solution) |
 
-The test RMSE of the paper can be recomputed from it with the package (`tests/test_stratfs.py`).
+The test RMSE of the paper can be recomputed from it with the package (`tests/test_stratfs.py`,
+`paper/reproduce.py`).
 
 `tests/data/reference_predictions.csv` holds the 6,144 held-out test designs with the predictions of the three
 forms from the code used in the paper and the simulated (grid-extrapolated) solar fraction; the tests check that
 this package reproduces them.
+
+## Reproducing the paper
+
+```bash
+pip install -e ".[paper]"
+python paper/reproduce.py --check
+```
+
+recomputes, with the package, the results of the paper and compares them with the manuscript's values
+(`paper/expected/`); tables and figures go to `paper/results/`:
+
+| Result | Paper | Output |
+|---|---|---|
+| Test RMSE of the three forms per load, and of the final form per accuracy range | Section 5, Table 5 | `section5_test_rmse.csv`, `section5_accuracy_ranges.csv` |
+| Sizing in Karachi for f_s = 0.4, 0.6, 0.8 at 25, 50, 100 L/m², against simulation | Section 6.1, Table 6, Fig. 7 | `sizing_designs.csv`, `sizing_confirmation.csv`, `sizing_grid.csv`, `fig7_sizing.png` |
+| The 650 m², 10 m³ plant at 267 sites, and its confirmation at 30 sites | Section 6.2, Table 7, Fig. 8 | `world_plant.csv`, `confirm_plant.csv`, `table7_confirm_plant.csv`, `fig8_world.png`, `figS_world_plant.png` |
+| Its dimensionless specification at 267 sites, the plant realizing it, and its confirmation | Section 6.3, Table S2.1 | `world_specification.csv`, `confirm_specification.csv`, `tableS2_1_confirm_specification.csv`, `figS_world_specification.png` |
+
+It takes about two minutes. The simulations behind the comparisons (the converged stratified store with 100 and 200
+layers and its grid-extrapolated reference, and the fully mixed store) come from the reference model of the paper
+and are released as data: `data/simulation_database.csv.gz` for the fit and test, and `paper/data/` for Section 6
+(`sizing_simulation.csv`, `confirm_plant.csv`, `confirm_specification.csv`). The maps of the script plot the sites
+on longitude and latitude without land outlines.
 
 ## Tests
 
@@ -179,6 +240,6 @@ The citation will be updated with the volume, pages and DOI once the article is 
 
 ## Licence
 
-Code: MIT licence (`LICENSE`). Data in `stratfs/data` and `tests/data`: Creative Commons Attribution 4.0
+Code: MIT licence (`LICENSE`). Data in `stratfs/data`, `data`, `paper/data`, `paper/expected` and `tests/data`: Creative Commons Attribution 4.0
 (CC BY 4.0); the underlying weather data are from PVGIS, © European Union, reused under the Commission's
 reuse policy.

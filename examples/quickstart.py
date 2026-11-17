@@ -26,3 +26,17 @@ sweep = stratfs.predict_plant(plant, "Karachi", collector_area_m2=[200, 400, 650
 print(sweep[["collector_area_m2", "Phi_sys", "f_s", "valid"]].round(3).to_string(index=False))
 world = stratfs.world_plant(plant)
 print(f"Same plant at {len(world)} sites: f_s from {world.f_s.min():.2f} to {world.f_s.max():.2f}")
+
+# Design (Section 6 of the paper). Dimensional: the smallest collector area for a target solar fraction at
+# 25 and 50 litres of storage per m2 of collector, each at its best charging flow
+sized = stratfs.size_for_target(plant, "Karachi", targets=(0.4, 0.6, 0.8), specific_storage_l_m2=(25, 50))
+print(sized[["target", "specific_l_m2", "collector_area_m2", "storage_volume_m3", "R_ch", "f_s",
+             "accuracy_range"]].round(3).to_string(index=False))
+
+# Dimensionless: the plant as a specification (its groups in Karachi), and the plant that realizes it in Seville
+spec = stratfs.plant_specification(plant, "Karachi")
+r = stratfs.realize(spec, "Seville", plant)
+print(f"In Seville the specification needs {r['collector_area_m2']:,.0f} m2, {r['storage_volume_m3']:.1f} m3, "
+      f"a collector U_L of {r['U_L_implied_w_m2k']:.2f} W/m2K and a storage limit of {r['T_limit_C']:.0f} C")
+spec_world = stratfs.world_specification(spec, plant)
+print(f"Same specification at {len(spec_world)} sites: f_s from {spec_world.f_s.min():.2f} to {spec_world.f_s.max():.2f}")

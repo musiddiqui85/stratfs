@@ -3,7 +3,7 @@
 The collector, primary oil loop (two pipe legs) and external heat exchanger reduce to an effective source with
 the factor F_sys (Hottel-Whillier heat-removal factor, de Winter heat-exchanger factor, Beckman pipe factors) and
 the pipe correction chi_p,o of the loss slope. The defaults are the reference plant of the paper: 650 m2 of
-evacuated tubes, a 10 m3 atmospheric storage and a 50 m3/day process load at 80 C.
+evacuated tubes, a 10 m3 pressurized storage limited to 99 C and a 50 m3/day process load at 80 C.
 """
 from __future__ import annotations
 
